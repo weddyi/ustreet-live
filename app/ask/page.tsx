@@ -1,5 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 const QUESTIONS: Record<string, { emoji: string; label: string; color: string; qs: string[] }> = {
   deep: {
@@ -64,14 +73,24 @@ const QUESTIONS: Record<string, { emoji: string; label: string; color: string; q
   },
 };
 
-const MODES = Object.keys(QUESTIONS);
+const ORIGINAL_MODES = Object.keys(QUESTIONS);
+type QuestionInfo = { emoji: string; label: string; color: string; qs: string[] };
 
 export default function AskPage() {
   const [mode, setMode] = useState("deep");
   const [cardIndex, setCardIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [shuffledModes, setShuffledModes] = useState<Record<string, QuestionInfo>>(QUESTIONS as Record<string, QuestionInfo>);
 
-  const current = QUESTIONS[mode];
+  useEffect(() => {
+    const shuffled: Record<string, QuestionInfo> = {};
+    for (const m of ORIGINAL_MODES) {
+      shuffled[m] = { ...QUESTIONS[m], qs: shuffleArray(QUESTIONS[m].qs) };
+    }
+    setShuffledModes(shuffled);
+  }, []);
+
+  const current = shuffledModes[mode] || QUESTIONS[mode];
   const q = current.qs[cardIndex % current.qs.length];
 
   function nextCard() {
@@ -109,7 +128,7 @@ export default function AskPage() {
 
         {/* Mode pills */}
         <div style={{ display: "flex", gap: "8px", marginBottom: "32px", overflowX: "auto" }} className="no-scrollbar">
-          {MODES.map((m) => {
+          {ORIGINAL_MODES.map((m) => {
             const info = QUESTIONS[m];
             const active = m === mode;
             return (

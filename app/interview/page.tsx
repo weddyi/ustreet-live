@@ -1,6 +1,15 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 const QUESTIONS: Record<string, string[]> = {
   '🎵 Music': [
@@ -40,12 +49,25 @@ const QUESTIONS: Record<string, string[]> = {
   ]
 }
 
+const ORIGINAL_CATEGORIES_INTERVIEW = Object.keys(QUESTIONS)
+
 export default function Interview() {
   const router = useRouter()
   const [category, setCategory] = useState('🎵 Music')
   const [qIdx, setQIdx] = useState(0)
-  const categories = Object.keys(QUESTIONS)
-  const questions = QUESTIONS[category]
+  const [shuffledQuestions, setShuffledQuestions] = useState<Record<string, string[]>>({})
+  const [categories, setCategories] = useState(ORIGINAL_CATEGORIES_INTERVIEW)
+
+  useEffect(() => {
+    const shuffled: Record<string, string[]> = {}
+    for (const cat of ORIGINAL_CATEGORIES_INTERVIEW) {
+      shuffled[cat] = shuffleArray(QUESTIONS[cat])
+    }
+    setShuffledQuestions(shuffled)
+    setCategories(shuffleArray(ORIGINAL_CATEGORIES_INTERVIEW))
+  }, [])
+
+  const questions = (shuffledQuestions[category] || QUESTIONS[category])
   const q = questions[qIdx % questions.length]
 
   return (

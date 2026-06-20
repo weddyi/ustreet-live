@@ -1,5 +1,14 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 const QUESTIONS: Record<string, string[]> = {
   "🎵 Music": [
@@ -54,16 +63,30 @@ const QUESTIONS: Record<string, string[]> = {
   ],
 };
 
-const CATEGORIES = Object.keys(QUESTIONS);
+const ORIGINAL_CATEGORIES = Object.keys(QUESTIONS);
+
+// Shuffled question pools per category (shuffled on mount)
+const EMPTY_SHUFFLED: Record<string, string[]> = {};
 
 export default function CardsPage() {
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [category, setCategory] = useState(ORIGINAL_CATEGORIES[0]);
   const [cardIndex, setCardIndex] = useState(0);
+  const [shuffledQuestions, setShuffledQuestions] = useState<Record<string, string[]>>(EMPTY_SHUFFLED);
+  const [categories, setCategories] = useState(ORIGINAL_CATEGORIES);
+
+  useEffect(() => {
+    const shuffled: Record<string, string[]> = {};
+    for (const cat of ORIGINAL_CATEGORIES) {
+      shuffled[cat] = shuffleArray(QUESTIONS[cat]);
+    }
+    setShuffledQuestions(shuffled);
+    setCategories(shuffleArray(ORIGINAL_CATEGORIES));
+  }, []);
   const [flipped, setFlipped] = useState(false);
   const [totalSeen, setTotalSeen] = useState(1);
   const touchStartX = useRef<number | null>(null);
 
-  const questions = QUESTIONS[category];
+  const questions = (shuffledQuestions[category] || QUESTIONS[category]);
   const currentQ = questions[cardIndex % questions.length];
 
   function nextCard() {
@@ -154,7 +177,7 @@ export default function CardsPage() {
           paddingBottom: "4px",
           marginBottom: "24px",
         }} className="no-scrollbar">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => handleCategoryChange(cat)}

@@ -1,5 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 const TRUTHS = [
   "What's the biggest lie you've told this week?",
@@ -43,10 +52,14 @@ export default function TruthDarePage() {
   const [flipped, setFlipped] = useState(false);
   const [choice, setChoice] = useState<"truth" | "dare" | null>(null);
   const [currentCard, setCurrentCard] = useState("");
+  const shuffledTruths = useRef<string[]>(TRUTHS);
+  const shuffledDares = useRef<string[]>(DARES);
 
   useEffect(() => {
     const saved = localStorage.getItem("usl-players");
     if (saved) setPlayers(JSON.parse(saved));
+    shuffledTruths.current = shuffleArray(TRUTHS);
+    shuffledDares.current = shuffleArray(DARES);
   }, []);
 
   function addPlayer() {
@@ -65,7 +78,7 @@ export default function TruthDarePage() {
 
   function handleChoice(type: "truth" | "dare") {
     setChoice(type);
-    setCurrentCard(type === "truth" ? randomFrom(TRUTHS) : randomFrom(DARES));
+    setCurrentCard(type === "truth" ? randomFrom(shuffledTruths.current) : randomFrom(shuffledDares.current));
     setFlipped(true);
   }
 

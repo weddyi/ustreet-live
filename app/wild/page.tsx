@@ -1,5 +1,14 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 const WHEEL_SEGMENTS = [
   { label: "Truth", emoji: "🔵", color: "#2979FF" },
@@ -54,11 +63,6 @@ const QUESTIONS: Record<string, string[]> = {
   ],
 };
 
-function randomQ(category: string) {
-  const arr = QUESTIONS[category];
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
 const NUM_SEGMENTS = WHEEL_SEGMENTS.length;
 const ANGLE_PER = 360 / NUM_SEGMENTS;
 
@@ -68,6 +72,20 @@ export default function WildPage() {
   const [result, setResult] = useState<{ segment: typeof WHEEL_SEGMENTS[0]; question: string } | null>(null);
   const [animDuration, setAnimDuration] = useState(0);
   const spinCount = useRef(0);
+  const [shuffledQuestions, setShuffledQuestions] = useState<Record<string, string[]>>(QUESTIONS);
+
+  useEffect(() => {
+    const shuffled: Record<string, string[]> = {};
+    for (const cat of Object.keys(QUESTIONS)) {
+      shuffled[cat] = shuffleArray(QUESTIONS[cat]);
+    }
+    setShuffledQuestions(shuffled);
+  }, []);
+
+  function randomQ(category: string) {
+    const arr = shuffledQuestions[category] || QUESTIONS[category];
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
 
   function spin() {
     if (spinning) return;
